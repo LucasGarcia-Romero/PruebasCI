@@ -11,7 +11,7 @@ trigger_github_actions_tests:
       curl -X POST \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-        https://api.github.com/repos/mi_usuario/PruebasCI/actions/workflows/tests.yml/dispatches \
+        https://api.github.com/repos/LucasGarcia-Romero/PruebasCI/actions/workflows/tests.yml/dispatches \
         -d '{
           "ref": "main",
           "inputs": {
