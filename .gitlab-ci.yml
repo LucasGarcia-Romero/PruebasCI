@@ -3,31 +3,33 @@ stages:
 
 trigger_github_actions_tests:
   stage: trigger-gh-actions
-  image: curlimages/curl:latest
+  image: alpine:3.20
   script:
+    - apk add --no-cache curl jq
     - |
       # Lanzar el workflow
       curl -X POST \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-        https://api.github.com/repos/LucasGarcia-Romero/PruebasCI/actions/workflows/tests.yml/dispatches \
-        -d "{
-          \"ref\": \"main\",
-          \"inputs\": {
-            \"gitlab_pipeline_id\": \"${CI_PIPELINE_ID}\"
+        https://api.github.com/repos/mi_usuario/PruebasCI/actions/workflows/tests.yml/dispatches \
+        -d '{
+          "ref": "main",
+          "inputs": {
+            "gitlab_pipeline_id": "'"${CI_PIPELINE_ID}"'"
           }
-        }"
+        }'
 
-      # Espera inicial (por ejemplo 20 segundos)
+      # Espera inicial
       sleep 20
 
-      # Polling sencillo del último run de ese workflow en esa rama
+      # Polling del último run
       RUN_STATUS=""
       for i in $(seq 1 15); do
         RESP=$(curl -s \
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-          "https://api.github.com/repos/TU_ORG/TU_REPO/actions/workflows/tests.yml/runs?branch=main&per_page=1")
+          "https://api.github.com/repos/LucasGarcia-Romero/PruebasCI/actions/workflows/tests.yml/runs?branch=main&per_page=1")
+
         RUN_STATUS=$(echo "$RESP" | jq -r '.workflow_runs[0].conclusion')
 
         echo "Intento $i - estado: $RUN_STATUS"
@@ -45,4 +47,3 @@ trigger_github_actions_tests:
       fi
   only:
     - main
-
