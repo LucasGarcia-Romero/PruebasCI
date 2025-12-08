@@ -45,5 +45,5 @@ trigger_github_actions_tests:
         echo "GitHub Actions terminó con estado: $RUN_STATUS"
         exit 1
       fi
-  only:
+  only: 
     - main
