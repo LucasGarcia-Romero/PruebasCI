@@ -11,8 +11,8 @@ trigger_github_actions_tests:
 
       echo "Longitud del token: ${#GITHUB_TOKEN}"
 
-      echo "Lanzando workflow en GitHub..."
-      curl -v -X POST \
+      # Lanzar el workflow en GitHub
+      STATUS=$(curl -s -o /tmp/dispatch_resp.json -w "%{http_code}" \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
         https://api.github.com/repos/LucasGarcia-Romero/PruebasCI/actions/workflows/tests.yml/dispatches \
@@ -21,17 +21,13 @@ trigger_github_actions_tests:
           "inputs": {
             "gitlab_pipeline_id": "'"${CI_PIPELINE_ID}"'"
           }
-        }' -o /tmp/dispatch_resp.json -w "\nHTTP_STATUS=%{http_code}\n"
+        }')
 
-      echo "Respuesta dispatch:"
-      cat /tmp/dispatch_resp.json || true
+      echo "HTTP_STATUS=${STATUS}"
 
-      . /tmp/dispatch_resp.json 2>/dev/null || true
-      echo "-----"
-
-      # Si el status HTTP no es 204, algo va mal
-      if ! grep -q "HTTP_STATUS=204" /tmp/dispatch_resp.json; then
-        echo "El dispatch NO ha devuelto 204. Revisa el mensaje de error de arriba."
+      if [ "$STATUS" != "204" ]; then
+        echo "Error al lanzar el workflow. Cuerpo de respuesta:"
+        cat /tmp/dispatch_resp.json || true
         exit 1
       fi
 
@@ -45,9 +41,6 @@ trigger_github_actions_tests:
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${GITHUB_TOKEN}" \
           "https://api.github.com/repos/LucasGarcia-Romero/PruebasCI/actions/workflows/tests.yml/runs?branch=main&per_page=1")
-
-        echo "Respuesta polling:"
-        echo "$RESP"
 
         RUN_STATUS=$(echo "$RESP" | jq -r '.workflow_runs[0].conclusion')
 
@@ -64,5 +57,5 @@ trigger_github_actions_tests:
         echo "GitHub Actions terminó con estado: $RUN_STATUS"
         exit 1
       fi
-  only: 
+  only:
     - main
